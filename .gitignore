@@ -1,2 +1,4 @@
 .sshInfo
 .env
+.env.test
+node_modules
