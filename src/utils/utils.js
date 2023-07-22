@@ -6,7 +6,7 @@ const Utils = {
     async validateToken(token) {
         const decoded = jwt.verify(token, process.env.JWT_SECRET, { expiresIn: '1h' });
         const userInfo = decoded.userInfo;
-        const lastTimestamp = await pool.query('SELECT password_changed_at, last_login FROM User WHERE id = $1', [decoded.userInfo.userId]);
+        const lastTimestamp = await pool.query('SELECT password_changed_at, last_login FROM users WHERE user_id = $1', [userInfo.userId]);
         const tokenTimestamp = new Date(decoded.timestamp);
 
         if (!userInfo || lastTimestamp.rows[0].last_login > tokenTimestamp

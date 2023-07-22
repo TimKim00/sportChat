@@ -8,7 +8,7 @@ const User = {
         const query = 'SELECT * FROM users WHERE username = $1';
         const values = [username];
         const result = await pool.query(query, values);
-        return result.rowCount > 0 ? result.rows[0] : null;
+        return result.rowCount > 0 ? Utils.userInfoFilter(result.rows[0]) : null;
     },
 
     /** Finds user with user id. */
@@ -27,7 +27,7 @@ const User = {
         const encryptedPassword = await encryptPassword(password);
         values = [username, encryptedPassword, new Date(), adminStatus, email, name];
         const result = await pool.query(query, values);
-        return result.rowCount > 0 ? Utils.userInfoFilter(result.rows[0]): null;
+        return result.rowCount > 0 ? Utils.userInfoFilter(result.rows[0]) : null;
     },
 
     /** Logs in the user. */
@@ -50,13 +50,64 @@ const User = {
         const query = 'UPDATE users SET last_login = $1 WHERE username = $2';
         const values = [new Date(), username];
         const result = await pool.query(query, values);
-        if (result.rowCount > 0) {
-            return true;
-        }
-        return false;
+        return result.rowCount > 0;
     },
 
+    /** Delete a user account */
+    async deleteUser(username) {
+        try {
+            /** Remove each components that are associated with the user that is being deleted. */
+            let result;
 
+            /** Start transaction */
+            await pool.query('BEGIN');
+
+            /** Retreive the user's id */
+            result = await pool.query('SELECT user_id FROM users WHERE username = $1', [username]);
+            const userId = result.rows[0].user_id;
+
+            /** Remove the games that the user is interested in. */
+            await pool.query('DELETE FROM game_interests WHERE user_id = $1', [userId]);
+            await pool.query('DELETE FROM league_interests WHERE user_id = $1', [userId]);
+            await pool.query('DELETE FROM team_interests WHERE user_id = $1', [userId]);
+
+            /* Remove the user from the users database. */
+            const query = 'DELETE FROM users WHERE username = $1';
+            const values = [username];
+            result = await pool.query(query, values);
+            return result.rowCount > 0;
+        } catch (err) {
+            console.error(err);
+            // Rollback transaction if any queries failed
+            await pool.query('ROLLBACK');
+            return false;
+        }
+    },
+
+    /** Update the properties of the user. */
+    async updateUser(username, email, name, adminStatus = false) {
+        const query = `UPDATE users SET email = $1, name = $2,
+         admin_status = $3 WHERE username = $4 RETURNING *`;
+        const values = [email, name, adminStatus, username];
+
+        const result = await pool.query(query, values);
+        return result.rowCount > 0 ? Utils.userInfoFilter(result.rows[0]) : null;
+    }, 
+
+    /** Change the user's password. */
+    async changePassword(username, newPassword, oldPassword) {
+        if (!await this.loginUser(username, oldPassword)) {
+            return false;
+        }
+
+        const newEncryptedPassword = await encryptPassword(newPassword);
+        query = `UPDATE users SET encrypted_password = $1, password_changed_at = $2
+                 WHERE username = $3 RETURNING *`;
+        values = [newEncryptedPassword, new Date(), username];
+
+        const result = await pool.query(query, values);
+        return result.rowCount > 0;
+    }
 }
 
 async function encryptPassword(password) {

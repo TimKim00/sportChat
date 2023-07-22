@@ -41,11 +41,11 @@ exports.loginUser = async (req, res) => {
 /** Logs out the user */
 exports.logoutUser = async (req, res) => {
   try {
-    const result = User.logoutUser(req.body.username);
+    const result = await User.logoutUser(req.body.username);
     if (!result) {
       return res.status(401).json({ msg: 'Logout Failed.' });
     }
-    return res.status(204).json({ msg: 'Logout Successful.' });
+    return res.status(200).json({ msg: 'Logout Successful.' });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: 'Server error' });
@@ -54,7 +54,69 @@ exports.logoutUser = async (req, res) => {
 
 /** Removes the user account */
 exports.deleteUser = async (req, res) => {
-  
+  try {
+    const result = await User.deleteUser(req.body.username);
+    if (!result) {
+      return res.status(401).json({ msg: 'Delete Failed.' });
+    }
+    return res.status(204).json({ msg: 'Delete Successful.' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
 }
 
+/** Retreive the user's information. */
+exports.getUser = async (req, res) =>  {
+  if (!req.body) {
+    return res.status(400).json({ msg: 'User not found.' });
+  }
+
+  const {username, userId} = req.body;
+  try {
+    let result = undefined;
+    if (userId) {
+      result = await User.findById(userId);
+    } else if (username) {
+      result = await User.findByUsername(username);
+    }
+    if (!result) {
+      return res.status(401).json({ msg: 'User not found.' });
+    }
+    return res.status(201).json(result);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
+/** Changes the user's information */
+exports.updateUser = async (req, res) => {
+  const {username, email, name, adminStatus} = req.body;
+  try {
+    const result = await User.updateUser(username, email, name, adminStatus);
+    if (!result) {
+      return res.status(401).json({ msg: 'Change Failed.' });
+    }
+    return res.status(201).json(result);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
+/** Changes the user's password */
+exports.changePassword = async (req, res) => {
+  const {username, oldPassword, newPassword} = req.body;
+  try {
+    const result = await User.changePassword(username, newPassword, oldPassword);
+    if (!result) {
+      return res.status(401).json({ msg: 'Change Failed.' });
+    }
+    return res.status(201).json({ msg: 'Change Successful.' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
 

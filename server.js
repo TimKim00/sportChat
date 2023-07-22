@@ -19,7 +19,7 @@ app.use(apiLimiter);
 
 // Import routes
 app.use('/auth', authRoute);
-//app.use('/user', userRoute);
+app.use('/user', userRoute);
 
 // Start the server.
 const port = process.env.PORT || 3000;

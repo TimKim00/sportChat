@@ -6,7 +6,10 @@ const userController = require('../controllers/user.controller');
 const authenticator = require('../middlewares/auth.mw');
 require('dotenv').config();
 
-// const router = express.Router();
+const router = express.Router();
 
-// router.get('/', authenticator, userController.getUser);
-// router.put('/', authenticator, userController.updateUser);
+router.get('/', authenticator, userController.getUser);
+router.put('/', authenticator, userController.updateUser);
+router.delete('/', authenticator, userController.deleteUser);
+
+module.exports = router;

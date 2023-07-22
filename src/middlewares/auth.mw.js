@@ -8,7 +8,6 @@ module.exports = async function(req, res, next) {
     // If the token is not valid, send a 401 Unauthorized response.
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];  // Bearer <token>
-    
     try {
         if (!token || !await Utils.validateToken(token)) {
             return res.status(401).json({msg: 'Unauthorized'});
