@@ -6,20 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-services:
-  postgres:
-    image: postgres
-    env:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    options: >-
-      --health-cmd pg_isready
-      --health-interval 10s
-      --health-timeout 5s 
-      --health-retries 5
-    ports:
-      - 5432:5432
-
 jobs:
 
   test:
@@ -33,7 +19,12 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 12.x
-        
+
+    - name: Start Postgres
+      run: |
+        docker run -d --name postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres
+        sleep 10 # Give Postgres time to initialize
+
     - name: Install dependencies  
       run: npm install
 
@@ -46,3 +37,6 @@ jobs:
         DB_PASS: postgres
         DB_NAME: testdb  
       run: npm test
+
+    - name: Stop Postgres
+      run: docker stop postgres
